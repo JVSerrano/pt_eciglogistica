@@ -1,0 +1,11 @@
+# Claves y configuracion local
+.env
+
+# Archivos del sistema y editor
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Python
+__pycache__/
+*.pyc
