@@ -24,3 +24,46 @@ INSERT INTO error_types (code, description) VALUES
     ('AI_TIMEOUT', 'La IA tardó demasiado en responder'),
     ('AI_INVALID_RESPONSE', 'La IA devolvió un departamento no válido'),
     ('UNKNOWN', 'Error no previsto');
+
+-- Consultas de los clientes
+CREATE TABLE consultations (
+    id SERIAL PRIMARY KEY,
+    client_name VARCHAR(100) NOT NULL,
+    message TEXT NOT NULL,
+    department_id INTEGER REFERENCES departments(id),
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    error_type_id INTEGER REFERENCES error_types(id),
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    classified_at TIMESTAMP,
+
+    -- Solo se permiten estos tres estados
+    CONSTRAINT consultations_status_check
+        CHECK (status IN ('pending', 'classified', 'error')),
+
+    -- Coherencia entre estado, departamento y error
+    CONSTRAINT consultations_coherence_check CHECK (
+        (status = 'pending'    AND department_id IS NULL     AND error_type_id IS NULL)
+        OR (status = 'classified' AND department_id IS NOT NULL AND error_type_id IS NULL)
+        OR (status = 'error'      AND department_id IS NULL     AND error_type_id IS NOT NULL)
+    )
+);
+
+-- Datos de ejemplo (ficticios)
+INSERT INTO consultations (client_name, message, status, department_id, error_type_id, classified_at)
+VALUES
+    (
+        'Cliente Ejemplo 1',
+        'Quiero información sobre los precios de vuestros servicios.',
+        'classified',
+        (SELECT id FROM departments WHERE name = 'Comercial'),
+        NULL,
+        NOW()
+    ),
+    (
+        'Cliente Ejemplo 2',
+        'La aplicación no me deja iniciar sesión.',
+        'error',
+        NULL,
+        (SELECT id FROM error_types WHERE code = 'AI_TIMEOUT'),
+        NOW()
+    );
