@@ -13,6 +13,8 @@ services:
     volumes:
       # Guarda los datos aunque se borre el contenedor
       - pgdata:/var/lib/postgresql/data
+      # Se ejecuta solo la primera vez, cuando el volumen está vacío
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
       # Pregunta a PostgreSQL si ya está listo para recibir conexiones
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
