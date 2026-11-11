@@ -106,6 +106,21 @@ Si la BD no conecta: `"database": "error"` y código HTTP 500. Nunca muestra con
 | `web` arranca antes que la BD | `depends_on` con `condition: service_healthy`. |
 | `init.sql` (Etapa 1) no se ejecuta porque el volumen ya existe | Documentar en SPEC 02: `docker compose down -v` para empezar de cero. |
 
+## Progreso de la implementación
+
+Rama: `spec-01-preparar-repositorio`. Última actualización: 2026-11-09.
+
+- [x] Paso 1: `.env.example` creado, `.env` local ignorado. Commit `6449749`.
+- [ ] Paso 2: `docker-compose.yml` con el servicio `db` escrito y validado con `docker compose config`. **Pendiente:**
+  - Ejecutar `docker compose up -d db` y comprobar que `docker compose ps` muestra `db` como `healthy`.
+  - Conectar TablePlus a `localhost:5433`.
+  - Commit `chore: add postgres service` (el archivo aún no está commiteado).
+- [ ] Paso 3: `docker/php/Dockerfile` y servicio `web`.
+- [ ] Paso 4: `public/health.php`.
+- [ ] Paso 5: cierre, estado `Implementado` y push de `main` y de la rama.
+
+Nota: el comentario de `CLASSIFIER_MODE` en `.env.example` va en una línea aparte (no al final de la línea), para que Docker Compose no lo lea como parte del valor.
+
 ## Lo que **no** está en este spec
 
 - Tablas y datos de ejemplo.

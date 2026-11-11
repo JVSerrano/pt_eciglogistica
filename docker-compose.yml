@@ -1,0 +1,24 @@
+services:
+  # Base de datos PostgreSQL
+  db:
+    image: postgres:16
+    environment:
+      # Los valores salen del archivo .env
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      # Puerto del PC : puerto dentro del contenedor
+      - "5433:5432"
+    volumes:
+      # Guarda los datos aunque se borre el contenedor
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # Pregunta a PostgreSQL si ya está listo para recibir conexiones
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:
