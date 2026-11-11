@@ -1,6 +1,6 @@
 # SPEC 02 — Base de datos: tablas y datos de ejemplo
 
-> **Estado:** Aprobado 
+> **Estado:** Implementado
 > **Depende de:** SPEC 01 (Implementado)
 > **Fecha:** 2026-11-11
 > **Objetivo:** Que PostgreSQL cree solo las 3 tablas y cargue los datos de ejemplo en el primer arranque, y que TablePlus los muestre.
@@ -112,16 +112,16 @@ Regla de coherencia (un `CHECK` a nivel de tabla):
 
 ## Criterios de aceptación
 
-- [ ] Tras `docker compose down -v` y `docker compose up -d`, TablePlus muestra las tablas `departments`, `error_types` y `consultations`.
-- [ ] `departments` tiene 3 filas, `error_types` 5 y `consultations` 2.
-- [ ] Reiniciar los contenedores sin `-v` no duplica los datos.
-- [ ] Insertar una consulta con `status = 'otro'` falla.
-- [ ] Insertar una consulta `classified` sin `department_id` falla.
-- [ ] Insertar una consulta con `department_id = 99` falla.
-- [ ] Insertar un departamento repetido falla.
-- [ ] `health.php` sigue devolviendo `"database": "ok"`.
-- [ ] `init.sql` no contiene datos reales de nadie.
-- [ ] El código está en inglés básico y los comentarios en español.
+- [x] Tras `docker compose down -v` y `docker compose up -d`, TablePlus muestra las tablas `departments`, `error_types` y `consultations`.
+- [x] `departments` tiene 3 filas, `error_types` 5 y `consultations` 2.
+- [x] Reiniciar los contenedores sin `-v` no duplica los datos.
+- [x] Insertar una consulta con `status = 'otro'` falla.
+- [x] Insertar una consulta `classified` sin `department_id` falla.
+- [x] Insertar una consulta con `department_id = 99` falla.
+- [x] Insertar un departamento repetido falla.
+- [x] `health.php` sigue devolviendo `"database": "ok"`.
+- [x] `init.sql` no contiene datos reales de nadie.
+- [x] El código está en inglés básico y los comentarios en español.
 
 ## Decisiones
 
@@ -145,12 +145,12 @@ Regla de coherencia (un `CHECK` a nivel de tabla):
 
 ## Progreso de la implementación
 
-Rama: `spec-02-base-de-datos` (aún sin crear). Última actualización: 2026-11-11.
+Rama: `spec-02-base-de-datos`. Última actualización: 2026-11-11.
 
-- [ ] Paso 1: `init.sql` con `departments` y `error_types`.
-- [ ] Paso 2: tabla `consultations` y datos de ejemplo.
-- [ ] Paso 3: montar `init.sql` en `docker-compose.yml` y probar desde cero.
-- [ ] Paso 4: probar restricciones, cierre y push.
+- [x] Paso 1: `init.sql` con `departments` y `error_types`.
+- [x] Paso 2: tabla `consultations` y datos de ejemplo.
+- [x] Paso 3: montar `init.sql` en `docker-compose.yml` y probar desde cero.
+- [x] Paso 4: probar restricciones, cierre y push.
 
 ## Lo que **no** está en este spec
 
