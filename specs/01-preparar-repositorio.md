@@ -1,6 +1,6 @@
 # SPEC 01 — Preparar el repositorio y el entorno Docker
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** —
 > **Fecha:** 2026-11-09
 > **Objetivo:** Dejar el repositorio con su estructura, `.env.example` y un `docker-compose.yml` que arranca PostgreSQL y PHP/Python, comprobado con `health.php`.
@@ -113,8 +113,8 @@ Rama: `spec-01-preparar-repositorio`. Última actualización: 2026-11-09.
 
 - [x] Paso 1: `.env.example` creado, `.env` local ignorado. Commit `6449749`.
 - [x] Paso 2: servicio `db` en `docker-compose.yml`. `db` en `healthy` y TablePlus conecta a `localhost:5433`. Commit `9dd0d2d`.
-- [ ] Paso 3: `docker/php/Dockerfile` y servicio `web`.
-- [ ] Paso 4: `public/health.php`.
+- [x] Paso 3: `docker/php/Dockerfile` y servicio `web`. `web` en marcha en el 8081 y Python 3.13.5 responde. Commiteado.
+- [ ] Paso 4: `public/health.php` escrito. **Pendiente:** probar `http://localhost:8081/health.php` y el caso con `db` parado.
 - [ ] Paso 5: cierre, estado `Implementado` y push de `main` y de la rama.
 
 Nota: el comentario de `CLASSIFIER_MODE` en `.env.example` va en una línea aparte (no al final de la línea), para que Docker Compose no lo lea como parte del valor.
