@@ -75,14 +75,14 @@ Si la BD no conecta: `"database": "error"` y código HTTP 500. Nunca muestra con
 
 ## Criterios de aceptación
 
-- [ ] `docker compose up -d --build` termina sin errores y `docker compose ps` muestra `db` y `web` en marcha.
-- [ ] TablePlus conecta a `localhost:5433` con los datos de `.env`.
-- [ ] `http://localhost:8081/health.php` devuelve JSON con `php`, `python` y `"database": "ok"`.
-- [ ] Con `db` parado, `health.php` devuelve `"database": "error"` y HTTP 500, sin mostrar contraseñas.
-- [ ] `git ls-files` no incluye `.env` ni `PLAN_PRIVADO.md`.
-- [ ] `.env.example` no contiene ninguna clave real.
-- [ ] Hay un commit por paso y `origin` tiene los cambios.
-- [ ] El código está en inglés básico y los comentarios en español.
+- [x] `docker compose up -d --build` termina sin errores y `docker compose ps` muestra `db` y `web` en marcha.
+- [x] TablePlus conecta a `localhost:5433` con los datos de `.env`.
+- [x] `http://localhost:8081/health.php` devuelve JSON con `php`, `python` y `"database": "ok"`.
+- [x] Con `db` parado, `health.php` devuelve `"database": "error"` y HTTP 500, sin mostrar contraseñas.
+- [x] `git ls-files` no incluye `.env` ni `PLAN_PRIVADO.md`.
+- [x] `.env.example` no contiene ninguna clave real.
+- [x] Hay un commit por paso y `origin` tiene los cambios.
+- [x] El código está en inglés básico y los comentarios en español.
 
 ## Decisiones
 
@@ -109,13 +109,13 @@ Si la BD no conecta: `"database": "error"` y código HTTP 500. Nunca muestra con
 
 ## Progreso de la implementación
 
-Rama: `spec-01-preparar-repositorio`. Última actualización: 2026-11-09.
+Rama: `spec-01-preparar-repositorio`. Última actualización: 2026-11-11.
 
 - [x] Paso 1: `.env.example` creado, `.env` local ignorado. Commit `6449749`.
 - [x] Paso 2: servicio `db` en `docker-compose.yml`. `db` en `healthy` y TablePlus conecta a `localhost:5433`. Commit `9dd0d2d`.
 - [x] Paso 3: `docker/php/Dockerfile` y servicio `web`. `web` en marcha en el 8081 y Python 3.13.5 responde. Commiteado.
-- [ ] Paso 4: `public/health.php` escrito. **Pendiente:** probar `http://localhost:8081/health.php` y el caso con `db` parado.
-- [ ] Paso 5: cierre, estado `Implementado` y push de `main` y de la rama.
+- [x] Paso 4: `public/health.php`. Probado con `db` en marcha (200, `ok`) y parada (500, `error`).
+- [x] Paso 5: cierre, estado `Implementado` y push.
 
 Nota: el comentario de `CLASSIFIER_MODE` en `.env.example` va en una línea aparte (no al final de la línea), para que Docker Compose no lo lea como parte del valor.
 
