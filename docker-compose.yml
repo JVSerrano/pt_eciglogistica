@@ -34,6 +34,8 @@ services:
     volumes:
       # Los archivos de ./public se ven dentro del contenedor
       - ./public:/var/www/html
+      # El clasificador queda fuera de la carpeta pública de la web
+      - ./classifier:/opt/classifier:ro
     depends_on:
       db:
         # Espera a que la base de datos esté "healthy"
