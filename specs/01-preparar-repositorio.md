@@ -57,7 +57,7 @@ Servicios de `docker-compose.yml`:
 | Servicio | Imagen | Puerto en el PC | Notas |
 |----------|--------|-----------------|-------|
 | `db` | `postgres:16` | `5433` → 5432 | Volumen con nombre `pgdata`. Lee `POSTGRES_*` de `.env`. Healthcheck con `pg_isready`. |
-| `web` | build `docker/php/Dockerfile` | `8080` → 80 | Monta `./public` en `/var/www/html`. Lee todo `.env`. `depends_on: db` (condición healthy). Conecta a la BD con host `db`, puerto 5432. |
+| `web` | build `docker/php/Dockerfile` | `8081` → 80 | Monta `./public` en `/var/www/html`. Lee todo `.env`. `depends_on: db` (condición healthy). Conecta a la BD con host `db`, puerto 5432. |
 
 Respuesta de `health.php` (ejemplo):
 
@@ -70,14 +70,14 @@ Si la BD no conecta: `"database": "error"` y código HTTP 500. Nunca muestra con
 1. Crear `.env.example` y comprobar que `.env` está en `.gitignore`. Copiar a `.env` local. Commit.
 2. Crear `docker-compose.yml` solo con el servicio `db`. Prueba: `docker compose up -d db` y TablePlus conecta a `localhost:5433`. Commit.
 3. Crear `docker/php/Dockerfile` y añadir el servicio `web` al compose. Prueba: `docker compose up -d --build` y `docker compose exec web python3 --version` responde. Commit.
-4. Crear `public/health.php`. Prueba: abrir `http://localhost:8080/health.php`. Commit.
+4. Crear `public/health.php`. Prueba: abrir `http://localhost:8081/health.php`. Commit.
 5. Guardar este spec como `Implementado`. Revisar `git status` (sin `.env`). Push.
 
 ## Criterios de aceptación
 
 - [ ] `docker compose up -d --build` termina sin errores y `docker compose ps` muestra `db` y `web` en marcha.
 - [ ] TablePlus conecta a `localhost:5433` con los datos de `.env`.
-- [ ] `http://localhost:8080/health.php` devuelve JSON con `php`, `python` y `"database": "ok"`.
+- [ ] `http://localhost:8081/health.php` devuelve JSON con `php`, `python` y `"database": "ok"`.
 - [ ] Con `db` parado, `health.php` devuelve `"database": "error"` y HTTP 500, sin mostrar contraseñas.
 - [ ] `git ls-files` no incluye `.env` ni `PLAN_PRIVADO.md`.
 - [ ] `.env.example` no contiene ninguna clave real.
@@ -90,6 +90,7 @@ Si la BD no conecta: `"database": "error"` y código HTTP 500. Nunca muestra con
 - **No:** todo bajo `src/`. Añade un nivel sin aportar nada.
 - **Sí:** los dos servicios arrancan ya en la Etapa 0. Las etapas siguientes no tocan Docker salvo para añadir librerías.
 - **Sí:** puerto `5433` para la BD. Evita choque con un PostgreSQL local en 5432.
+- **Sí:** puerto `8081` para la web. El `8080` estaba ocupado por otro contenedor (pgAdmin).
 - **Sí:** `.env.example` con todas las variables desde el principio, incluidas las de Gemini y `CLASSIFIER_MODE`.
 - **Sí:** `health.php` como prueba. Comprueba PHP, Python y BD a la vez. Se puede borrar en la Etapa 5.
 - **No:** `index.html` de prueba. Solo probaría Apache.
@@ -102,7 +103,7 @@ Si la BD no conecta: `"database": "error"` y código HTTP 500. Nunca muestra con
 | Riesgo | Mitigación |
 |--------|------------|
 | Se sube `.env` por error | Está en `.gitignore`. Antes del push se revisa `git ls-files`. |
-| Puerto 8080 o 5433 ocupado | Cambiar el número en `docker-compose.yml`; documentarlo en el README. |
+| Puerto 8081 o 5433 ocupado | Cambiar el número en `docker-compose.yml`; documentarlo en el README. |
 | `web` arranca antes que la BD | `depends_on` con `condition: service_healthy`. |
 | `init.sql` (Etapa 1) no se ejecuta porque el volumen ya existe | Documentar en SPEC 02: `docker compose down -v` para empezar de cero. |
 
@@ -111,10 +112,7 @@ Si la BD no conecta: `"database": "error"` y código HTTP 500. Nunca muestra con
 Rama: `spec-01-preparar-repositorio`. Última actualización: 2026-11-09.
 
 - [x] Paso 1: `.env.example` creado, `.env` local ignorado. Commit `6449749`.
-- [ ] Paso 2: `docker-compose.yml` con el servicio `db` escrito y validado con `docker compose config`. **Pendiente:**
-  - Ejecutar `docker compose up -d db` y comprobar que `docker compose ps` muestra `db` como `healthy`.
-  - Conectar TablePlus a `localhost:5433`.
-  - Commit `chore: add postgres service` (el archivo aún no está commiteado).
+- [x] Paso 2: servicio `db` en `docker-compose.yml`. `db` en `healthy` y TablePlus conecta a `localhost:5433`. Commit `9dd0d2d`.
 - [ ] Paso 3: `docker/php/Dockerfile` y servicio `web`.
 - [ ] Paso 4: `public/health.php`.
 - [ ] Paso 5: cierre, estado `Implementado` y push de `main` y de la rama.
