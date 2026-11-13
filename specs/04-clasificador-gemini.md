@@ -76,7 +76,7 @@ Para quien llama, un mensaje clasificado por Gemini y uno clasificado por reserv
 - Temperatura `0` para que la misma frase dé la misma respuesta.
 - El prompt (en inglés básico) obliga a responder con **solo** uno de los tres nombres exactos y nada más.
 - El mensaje del cliente se envía como contenido separado de las instrucciones. Aunque alguien escriba "ignora lo anterior", solo se acepta una respuesta que sea uno de los tres nombres; lo peor que puede pasar es que elija otro departamento.
-- Se comparan los nombres recortando espacios y sin distinguir mayúsculas. El resultado devuelto es siempre el nombre canónico de la lista del código.
+- Se comparan los nombres recortando espacios, sin distinguir mayúsculas y sin tener en cuenta las tildes. El resultado devuelto es siempre el nombre canónico de la lista del código.
 
 ## Plan de implementación
 
@@ -127,13 +127,33 @@ Para quien llama, un mensaje clasificado por Gemini y uno clasificado por reserv
 
 ## Progreso de la implementación
 
-Rama: `spec-04-clasificador-gemini` (aún sin crear). Última actualización: 2026-11-11.
+Rama: `spec-04-clasificador-gemini` (creada, activa). Última actualización: 2026-11-13.
 
-- [ ] Paso 1: modelo vigente, clave en `.env` y petición suelta.
-- [ ] Paso 2: función `ask_gemini`.
-- [ ] Paso 3: modo `gemini` con reserva.
-- [ ] Paso 4: tests con Gemini simulado.
+- [x] Paso 1: modelo vigente, clave en `.env` y petición suelta. Modelo: `gemini-3.5-flash-lite` (HTTP 200).
+- [x] Paso 2: función `ask_gemini`. Hecho, **sin commit**.
+- [x] Paso 3: modo `gemini` con reserva. Hecho, **sin commit**.
+- [x] Paso 4: tests con Gemini simulado (29 tests en `OK`, también con red bloqueada). Hecho, **sin commit**.
 - [ ] Paso 5: cierre y push.
+
+### Estado al dejarlo (2026-11-13)
+
+- Todo el código está en el árbol de trabajo, **nada está commiteado**. Archivos modificados: `classifier/classifier.py`, `classifier/test_classifier.py` y este spec.
+- Cambio de spec acordado durante el Paso 2: la comparación de la respuesta de Gemini ignora también las tildes (`Soporte Tecnico` se acepta como `Soporte Técnico`).
+- `.env` sigue con `CLASSIFIER_MODE=keywords`. El modo `gemini` se ha probado pasando la variable con `-e` en `docker compose exec`. No hace falta cambiarlo para cerrar el spec.
+- `.env.example` ya tenía las tres variables, no se toca.
+
+### Qué falta
+
+1. Decidir cómo agrupar los commits (el plan pedía uno por paso 2, 3 y 4, pero se hizo todo sin commitear). Opciones: tres commits separados por archivo y tema, o uno solo.
+2. Repasar los criterios de aceptación uno a uno y marcarlos.
+3. Cambiar el estado del spec a `Implementado`.
+4. Commit final y push de la rama `spec-04-clasificador-gemini`, y fusionar con `main`.
+
+### Notas para retomar
+
+- Comandos en Git Bash: anteponer `MSYS_NO_PATHCONV=1`. No hay Python en el equipo anfitrión, todo se ejecuta en el contenedor `web`.
+- Tests: `docker compose exec web python3 -m unittest discover -s /opt/classifier`.
+- La web está en el puerto `8081` (`http://localhost:8081/health.php`).
 
 ## Lo que **no** está en este spec
 
