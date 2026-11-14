@@ -1,6 +1,6 @@
 # SPEC 04 — Clasificador con Gemini y reserva por palabras clave
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 03 (Implementado)
 > **Fecha:** 2026-11-11
 > **Objetivo:** Que `classifier.py` pueda preguntar a Gemini a qué departamento va un mensaje y, si Gemini falla, use las palabras clave del SPEC 03 como reserva, sin cambiar el formato de entrada ni de salida.
