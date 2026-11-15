@@ -1,6 +1,6 @@
 # SPEC 07 — Mejorar el clasificador: plurales y variantes de palabras
 
-> **Estado:** Borrador
+> **Estado:** Implementado
 > **Depende de:** SPEC 03 (Implementado), SPEC 04 (Implementado), SPEC 06 (Implementado)
 > **Fecha:** 2026-11-15
 > **Objetivo:** Que el clasificador por palabras clave reconozca plurales y variantes de las palabras (por ejemplo "ofertas" además de "oferta"), para que mensajes como "Necesito las nuevas ofertas para los socios de A Coruña" vayan a Comercial y no a Soporte Técnico.
@@ -53,6 +53,7 @@ Una palabra clave coincide si el texto contiene esa palabra **al comienzo de una
 | `las nuevas ofertas` | `oferta` | Sí |
 | `precios y tarifas` | `precio`, `tarifa` | Sí |
 | `una superoferta` | `oferta` | No (no está al comienzo de palabra) |
+| `una superoferta` | `superoferta` | Sí (se añade a la lista de Comercial como palabra propia) |
 | `no puedo entrar` | `no puedo` | Sí |
 
 Las frases de varias palabras (`no funciona`) siguen igual.
@@ -68,13 +69,13 @@ Las frases de varias palabras (`no funciona`) siguen igual.
 
 ## Criterios de aceptación
 
-- [ ] `Necesito las nuevas ofertas para los socios de A Coruña` se clasifica como Comercial en modo `keywords`.
-- [ ] Los plurales de las palabras clave (`ofertas`, `descuentos`, `tarifas`, `presupuestos`, `precios`) se reconocen.
-- [ ] Todos los tests anteriores del clasificador (SPEC 03 y SPEC 04) siguen pasando.
-- [ ] Hay tests nuevos para los plurales y para el mensaje que falló.
-- [ ] Un mensaje sin ninguna palabra clave sigue yendo a Soporte Técnico.
-- [ ] El formato de salida del script no cambia.
-- [ ] El código está en inglés básico y los comentarios en español.
+- [x] `Necesito las nuevas ofertas para los socios de A Coruña` se clasifica como Comercial en modo `keywords`.
+- [x] Los plurales de las palabras clave (`ofertas`, `descuentos`, `tarifas`, `presupuestos`, `precios`) se reconocen.
+- [x] Todos los tests anteriores del clasificador (SPEC 03 y SPEC 04) siguen pasando.
+- [x] Hay tests nuevos para los plurales y para el mensaje que falló.
+- [x] Un mensaje sin ninguna palabra clave sigue yendo a Soporte Técnico.
+- [x] El formato de salida del script no cambia.
+- [x] El código está en inglés básico y los comentarios en español.
 
 ## Decisiones
 
@@ -94,14 +95,16 @@ Las frases de varias palabras (`no funciona`) siguen igual.
 
 ## Progreso de la implementación
 
-Rama: pendiente de crear (`spec-07-mejorar-clasificador`). Última actualización: 2026-11-15.
+Rama: `spec-07-mejorar-clasificador`. Última actualización: 2026-11-15.
 
-- [ ] Paso 1: test que reproduce el fallo.
-- [ ] Paso 2: coincidencia por comienzo de palabra.
-- [ ] Paso 3: ajuste de las listas.
-- [ ] Paso 4: tests de plurales y no regresión.
-- [ ] Paso 5: prueba extremo a extremo.
-- [ ] Paso 6: cierre.
+- [x] Paso 1: test que reproduce el fallo. Modo activo en `.env`: `CLASSIFIER_MODE=keywords`, así que el fallo venía de las palabras clave y no de Gemini.
+- [x] Paso 2: coincidencia por comienzo de palabra. El test `test_whole_words_only` se ajustó (`preciosisimo` ya no es válido con la nueva regla).
+- [x] Paso 3: ajuste de las listas. Se quitó `precios`, `usuarios` pasó a `usuario` y se añadió `superoferta` a Comercial.
+- [x] Paso 4: tests de plurales y no regresión (35 tests, todos en verde).
+- [x] Paso 5: prueba extremo a extremo desde el frontend, correcta.
+- [x] Paso 6: cierre.
+
+Observación para una spec futura: `roto` también coincide con `rotonda` y `rotor` por la regla de comienzo de palabra.
 
 ## Lo que **no** está en este spec
 

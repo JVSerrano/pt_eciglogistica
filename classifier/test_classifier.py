@@ -71,7 +71,43 @@ class ClassifyTest(unittest.TestCase):
     def test_whole_words_only(self):
         # "error" dentro de "terror" no debe contar
         self.assertEqual(self.department("terror"), "Soporte Técnico")
-        self.assertEqual(self.department("preciosisimo"), "Soporte Técnico")
+        # "superoferta" va a Comercial porque está en la lista como palabra propia,
+        # no porque "oferta" coincida en mitad de la palabra
+        self.assertEqual(self.department("superoferta"), "Comercial")
+
+    def test_plural_offers_message_goes_to_sales(self):
+        # Mensaje real que falló en el frontend: "ofertas" (plural) debe contar como "oferta"
+        self.assertEqual(
+            self.department("Necesito las nuevas ofertas para los socios de A Coruña"),
+            "Comercial",
+        )
+
+    def test_plurals_of_sales_words(self):
+        # Cada plural debe dar el mismo resultado que su singular
+        for message in ["ofertas", "descuentos", "tarifas", "presupuestos", "precios"]:
+            with self.subTest(message=message):
+                self.assertEqual(self.department(message), "Comercial")
+
+    def test_plurals_of_support_words(self):
+        # Soporte Técnico es el departamento por defecto, así que se enfrenta a Comercial:
+        # dos plurales de Soporte (2 coincidencias) ganan a un precio (1 coincidencia).
+        # Si los plurales no se reconocieran, ganaría Comercial.
+        for plurals in ["errores y problemas", "usuarios y errores", "problemas y usuarios"]:
+            with self.subTest(plurals=plurals):
+                self.assertEqual(
+                    self.department("precio, " + plurals), "Soporte Técnico"
+                )
+
+    def test_plural_of_thanks_word(self):
+        self.assertEqual(self.department("excelentes noticias"), "Agradecimientos")
+
+    def test_multiword_phrase_still_matches(self):
+        self.assertEqual(self.department("no puedo entrar"), "Soporte Técnico")
+        self.assertEqual(self.department("buen trabajo"), "Agradecimientos")
+
+    def test_keyword_must_start_the_word(self):
+        # "error" en mitad de "terror" y "precio" en mitad de "aprecio" no cuentan
+        self.assertEqual(self.department("aprecio"), "Soporte Técnico")
 
     def test_department_names_match_database(self):
         names = [name for name, _ in classifier.KEYWORDS]

@@ -12,18 +12,20 @@ DEFAULT_DEPARTMENT = "Soporte Técnico"
 
 # Palabras clave por departamento, escritas sin tildes y en minúsculas.
 # El orden de la lista es el orden de desempate: gana el primero.
+# Cada palabra vale también como comienzo de otra ("oferta" cubre "ofertas"),
+# así que no hace falta escribir los plurales.
 KEYWORDS = [
     (
         "Soporte Técnico",
         [
-            "error", "fallo", "problema", "ayuda", "roto", "bloqueado", "bloqueo", "usuarios",
+            "error", "fallo", "problema", "ayuda", "roto", "bloqueado", "bloqueo", "usuario",
             "no funciona", "no puedo", "no me deja", "sesion", "contrasena", "incorrecto", "advertencia"
         ],
     ),
     (
         "Comercial",
         [
-            "precio", "precios", "presupuesto", "tarifa", "oferta",
+            "precio", "presupuesto", "tarifa", "oferta", "superoferta",
             "descuento", "comprar", "contratar", "informacion", "cancelacion"
         ],
     ),
@@ -73,10 +75,12 @@ def normalize(text):
 
 
 def count_matches(text, words):
-    # Cuenta cuántas palabras clave aparecen como palabra completa
+    # Cuenta cuántas palabras clave aparecen al comienzo de una palabra.
+    # Sin \b al final, "oferta" también coincide con "ofertas" y "ofertamos",
+    # pero no con "superoferta" (el \b del principio lo impide).
     total = 0
     for word in words:
-        if re.search(r"\b" + re.escape(word) + r"\b", text):
+        if re.search(r"\b" + re.escape(word), text):
             total += 1
     return total
 
