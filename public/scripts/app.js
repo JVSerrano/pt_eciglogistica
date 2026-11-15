@@ -36,6 +36,12 @@
     error: 'Error'
   };
 
+  // Texto de quién decidió el departamento (la IA o las palabras clave)
+  var METHOD_TEXT = {
+    gemini: 'IA',
+    keywords: 'Palabras clave'
+  };
+
   var loadingEl = document.getElementById('list-loading');
   var emptyEl = document.getElementById('list-empty');
   var errorEl = document.getElementById('list-error');
@@ -132,12 +138,15 @@
     consultations.forEach(function (item) {
       var tr = document.createElement('tr');
       var status = STATUS_TEXT[item.status] || item.status;
+      // Sin método (pendiente o con error) se muestra un guion
+      var method = item.classified_by ? (METHOD_TEXT[item.classified_by] || item.classified_by) : '—';
 
       tr.appendChild(createCell('Nombre', item.client_name, 'name'));
       tr.appendChild(createMessageCell(item.message));
       tr.appendChild(createCell('Departamento', item.department || '—', 'nowrap'));
       tr.appendChild(createCell('Estado', status, 'nowrap'));
       tr.appendChild(createCell('Fecha / hora', formatDate(item.created_at), 'nowrap'));
+      tr.appendChild(createCell('Clasificado por', method, 'nowrap'));
       listBodyEl.appendChild(tr);
     });
   }

@@ -48,6 +48,7 @@ function format_consultation(array $row): array
         'client_name' => $row['client_name'],
         'message' => $row['message'],
         'department' => $row['department'],
+        'classified_by' => $row['classified_by'],
         'status' => $row['status'],
         'error_code' => $row['error_code'],
         'created_at' => $row['created_at'],
@@ -60,7 +61,7 @@ function format_consultation(array $row): array
 // y una pending o classified no tiene tipo de error.
 function consultation_select_sql(): string
 {
-    return 'SELECT c.id, c.client_name, c.message, d.name AS department, c.status,
+    return 'SELECT c.id, c.client_name, c.message, d.name AS department, c.classified_by, c.status,
                    e.code AS error_code,
                    to_char(c.created_at, \'YYYY-MM-DD HH24:MI:SS\') AS created_at,
                    to_char(c.classified_at, \'YYYY-MM-DD HH24:MI:SS\') AS classified_at
@@ -236,9 +237,13 @@ function find_error_type_id(PDO $pdo, string $code): ?int
 }
 
 // Traduce el resultado del clasificador a los campos de la tabla.
-// Devuelve: status, department_id y error_type_id (uno de los dos ids es siempre null).
+// Devuelve: status, department_id, error_type_id y classified_by (uno de los dos ids es siempre null,
+// y classified_by solo tiene valor si la consulta queda clasificada).
 function interpret_classifier_result(PDO $pdo, array $run): array
 {
+    // Métodos de clasificación que acepta la base de datos
+    $valid_methods = ['gemini', 'keywords'];
+
     // Tabla de casos de error: cualquier fallo acaba en un código de error_types
     $error_code = 'UNKNOWN';
 
@@ -248,10 +253,16 @@ function interpret_classifier_result(PDO $pdo, array $run): array
         $output = json_decode($run['stdout'], true);
 
         if (is_array($output) && ($output['ok'] ?? null) === true && is_string($output['department'] ?? null)) {
-            // Solo vale un departamento que exista en la base de datos
+            // Solo vale un departamento que exista en la base de datos y un método conocido
             $department_id = find_department_id($pdo, $output['department']);
-            if ($department_id !== null) {
-                return ['status' => 'classified', 'department_id' => $department_id, 'error_type_id' => null];
+            $method = $output['method'] ?? null;
+            if ($department_id !== null && is_string($method) && in_array($method, $valid_methods, true)) {
+                return [
+                    'status' => 'classified',
+                    'department_id' => $department_id,
+                    'error_type_id' => null,
+                    'classified_by' => $method,
+                ];
             }
             $error_code = 'AI_INVALID_RESPONSE';
         } elseif (is_array($output) && ($output['ok'] ?? null) === false && is_string($output['error_code'] ?? null)) {
@@ -267,23 +278,31 @@ function interpret_classifier_result(PDO $pdo, array $run): array
         // Sin ni siquiera UNKNOWN no podemos guardar un error coherente
         throw new RuntimeException('error type missing in database: ' . $error_code);
     }
-    return ['status' => 'error', 'department_id' => null, 'error_type_id' => $error_type_id];
+    return [
+        'status' => 'error',
+        'department_id' => null,
+        'error_type_id' => $error_type_id,
+        'classified_by' => null,
+    ];
 }
 
 // Guarda el resultado de la clasificación en la consulta.
-// La tabla exige coherencia: classified lleva departamento y no error, error lleva error y no departamento.
+// La tabla exige coherencia: classified lleva departamento y método, y no error;
+// error lleva error y no departamento ni método.
 function save_classification(PDO $pdo, int $id, array $result): void
 {
     $stmt = $pdo->prepare(
         'UPDATE consultations
          SET status = :status, department_id = :department_id,
-             error_type_id = :error_type_id, classified_at = NOW()
+             error_type_id = :error_type_id, classified_by = :classified_by,
+             classified_at = NOW()
          WHERE id = :id'
     );
     $stmt->execute([
         ':status' => $result['status'],
         ':department_id' => $result['department_id'],
         ':error_type_id' => $result['error_type_id'],
+        ':classified_by' => $result['classified_by'],
         ':id' => $id,
     ]);
 }

@@ -42,6 +42,9 @@ class ClassifyTest(unittest.TestCase):
             "Soporte Técnico",
         )
 
+    def test_keywords_mode_reports_keywords_method(self):
+        self.assertEqual(classifier.classify("gracias por todo")["method"], "keywords")
+
     def test_empty_message(self):
         expected = {"ok": False, "error_code": "EMPTY_MESSAGE"}
         self.assertEqual(classifier.classify(""), expected)
@@ -151,7 +154,9 @@ class GeminiTest(unittest.TestCase):
 
     def test_valid_answer_is_used(self):
         result, err, _ = self.classify_with(return_value=fake_response("Comercial"))
-        self.assertEqual(result, {"ok": True, "department": "Comercial"})
+        self.assertEqual(
+            result, {"ok": True, "department": "Comercial", "method": "gemini"}
+        )
         self.assertEqual(err, "")
 
     def test_answer_ignores_case_spaces_and_accents(self):
@@ -163,7 +168,8 @@ class GeminiTest(unittest.TestCase):
     def test_invalid_answer_uses_keywords(self):
         # Sin palabras clave en el mensaje, la reserva da el departamento por defecto
         result, err, _ = self.classify_with(return_value=fake_response("Ventas"))
-        self.assertEqual(result, {"ok": True, "department": "Soporte Técnico"})
+        expected = {"ok": True, "department": "Soporte Técnico", "method": "keywords"}
+        self.assertEqual(result, expected)
         self.assertIn("gemini failed: invalid answer", err)
 
     def test_invalid_answer_fallback_uses_keywords_result(self):
@@ -283,7 +289,8 @@ class CommandLineTest(unittest.TestCase):
         process = self.run_script("no funciona")
         self.assertEqual(process.returncode, 0)
         output = process.stdout.decode("utf-8").strip()
-        self.assertEqual(output, '{"ok": true, "department": "Soporte Técnico"}')
+        expected = '{"ok": true, "department": "Soporte Técnico", "method": "keywords"}'
+        self.assertEqual(output, expected)
 
     def test_error_also_exits_with_zero(self):
         process = self.run_script("")
@@ -295,7 +302,8 @@ class CommandLineTest(unittest.TestCase):
         # Con trazas, el JSON de stdout es idéntico y la traza va solo a stderr
         process = self.run_script("no funciona", trace="true")
         output = process.stdout.decode("utf-8").strip()
-        self.assertEqual(output, '{"ok": true, "department": "Soporte Técnico"}')
+        expected = '{"ok": true, "department": "Soporte Técnico", "method": "keywords"}'
+        self.assertEqual(output, expected)
         error = process.stderr.decode("utf-8")
         self.assertTrue(error.startswith("trace mode=keywords"))
 

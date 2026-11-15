@@ -35,21 +35,27 @@ CREATE TABLE consultations (
     error_type_id INTEGER REFERENCES error_types(id),
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     classified_at TIMESTAMP,
+    -- Quién decidió el departamento: la IA (gemini) o las palabras clave (keywords)
+    classified_by VARCHAR(10),
 
     -- Solo se permiten estos tres estados
     CONSTRAINT consultations_status_check
         CHECK (status IN ('pending', 'classified', 'error')),
 
-    -- Coherencia entre estado, departamento y error
+    -- Solo se permiten estos dos métodos (o nulo)
+    CONSTRAINT consultations_classified_by_check
+        CHECK (classified_by IN ('gemini', 'keywords')),
+
+    -- Coherencia entre estado, departamento, error y método
     CONSTRAINT consultations_coherence_check CHECK (
-        (status = 'pending'    AND department_id IS NULL     AND error_type_id IS NULL)
-        OR (status = 'classified' AND department_id IS NOT NULL AND error_type_id IS NULL)
-        OR (status = 'error'      AND department_id IS NULL     AND error_type_id IS NOT NULL)
+        (status = 'pending'    AND department_id IS NULL     AND error_type_id IS NULL     AND classified_by IS NULL)
+        OR (status = 'classified' AND department_id IS NOT NULL AND error_type_id IS NULL     AND classified_by IS NOT NULL)
+        OR (status = 'error'      AND department_id IS NULL     AND error_type_id IS NOT NULL AND classified_by IS NULL)
     )
 );
 
 -- Datos de ejemplo (ficticios)
-INSERT INTO consultations (client_name, message, status, department_id, error_type_id, classified_at)
+INSERT INTO consultations (client_name, message, status, department_id, error_type_id, classified_at, classified_by)
 VALUES
     (
         'Cliente Ejemplo 1',
@@ -57,7 +63,8 @@ VALUES
         'classified',
         (SELECT id FROM departments WHERE name = 'Comercial'),
         NULL,
-        NOW()
+        NOW(),
+        'keywords'
     ),
     (
         'Cliente Ejemplo 2',
@@ -65,5 +72,6 @@ VALUES
         'error',
         NULL,
         (SELECT id FROM error_types WHERE code = 'AI_TIMEOUT'),
-        NOW()
+        NOW(),
+        NULL
     );

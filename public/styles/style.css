@@ -34,7 +34,8 @@ body {
 }
 
 .container {
-  max-width: 960px;
+  /* Ancho suficiente para que la tabla del listado quepa sin barra horizontal */
+  max-width: 1200px;
   margin: 0 auto;
   padding: 16px;
 }
@@ -253,10 +254,12 @@ h1 {
 
   .table td {
     display: grid;
-    grid-template-columns: 110px minmax(0, 1fr);
+    /* Columna de etiqueta más ancha (cabe "Clasificado por") */
+    grid-template-columns: 130px minmax(0, 1fr);
     gap: 8px;
     min-width: 0;
-    padding: 6px 12px;
+    /* Más espacio vertical para separar una etiqueta de la siguiente */
+    padding: 14px 12px;
     white-space: pre-wrap;
   }
 

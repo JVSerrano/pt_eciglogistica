@@ -235,7 +235,7 @@ def classify(message):
                     ("keywords", keywords_department),
                     ("ms", gemini_ms),
                 ])
-            return {"ok": True, "department": department}
+            return {"ok": True, "department": department, "method": "gemini"}
 
     # Aquí se llega en modo keywords o en modo gemini con reserva por fallo
     fallback_ms = elapsed_ms(start)
@@ -259,7 +259,7 @@ def classify(message):
             ("ms", elapsed_ms(start)),
         ])
 
-    return {"ok": True, "department": department}
+    return {"ok": True, "department": department, "method": "keywords"}
 
 
 def main():
