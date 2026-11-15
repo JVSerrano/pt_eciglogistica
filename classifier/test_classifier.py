@@ -16,7 +16,9 @@ SCRIPT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "classifier.py
 class ClassifyTest(unittest.TestCase):
     def setUp(self):
         # Estos tests son de palabras clave: se fuerza el modo para no depender del entorno
-        patcher = mock.patch.dict(os.environ, {"CLASSIFIER_MODE": "keywords"})
+        # y se apagan las trazas para que no ensucien la salida
+        env = {"CLASSIFIER_MODE": "keywords", "CLASSIFIER_TRACE": "false"}
+        patcher = mock.patch.dict(os.environ, env)
         patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -132,6 +134,7 @@ class GeminiTest(unittest.TestCase):
         # Modo gemini con clave y modelo falsos: no se necesita red ni clave real
         env = {
             "CLASSIFIER_MODE": "gemini",
+            "CLASSIFIER_TRACE": "false",
             "GEMINI_API_KEY": FAKE_KEY,
             "GEMINI_MODEL": "fake-model",
         }
@@ -234,7 +237,11 @@ class GeminiTest(unittest.TestCase):
 
 class ModeTest(unittest.TestCase):
     def classify_in_mode(self, mode):
-        env = {"GEMINI_API_KEY": FAKE_KEY, "GEMINI_MODEL": "fake-model"}
+        env = {
+            "GEMINI_API_KEY": FAKE_KEY,
+            "GEMINI_MODEL": "fake-model",
+            "CLASSIFIER_TRACE": "false",
+        }
         if mode is not None:
             env["CLASSIFIER_MODE"] = mode
         with mock.patch.dict(os.environ, env):
@@ -261,10 +268,10 @@ class ModeTest(unittest.TestCase):
 
 
 class CommandLineTest(unittest.TestCase):
-    def run_script(self, message):
+    def run_script(self, message, trace="false"):
         # Ejecuta el script igual que lo hará PHP: mensaje por stdin
         # Se fuerza keywords para que el test no use red aunque el entorno diga gemini
-        env = dict(os.environ, CLASSIFIER_MODE="keywords")
+        env = dict(os.environ, CLASSIFIER_MODE="keywords", CLASSIFIER_TRACE=trace)
         return subprocess.run(
             [sys.executable, SCRIPT],
             input=message.encode("utf-8"),
@@ -283,6 +290,161 @@ class CommandLineTest(unittest.TestCase):
         self.assertEqual(process.returncode, 0)
         output = process.stdout.decode("utf-8").strip()
         self.assertEqual(output, '{"ok": false, "error_code": "EMPTY_MESSAGE"}')
+
+    def test_trace_goes_to_stderr_and_stdout_does_not_change(self):
+        # Con trazas, el JSON de stdout es idéntico y la traza va solo a stderr
+        process = self.run_script("no funciona", trace="true")
+        output = process.stdout.decode("utf-8").strip()
+        self.assertEqual(output, '{"ok": true, "department": "Soporte Técnico"}')
+        error = process.stderr.decode("utf-8")
+        self.assertTrue(error.startswith("trace mode=keywords"))
+
+    def test_trace_off_leaves_stderr_empty(self):
+        process = self.run_script("no funciona", trace="false")
+        self.assertEqual(process.stderr, b"")
+
+
+class TraceTest(unittest.TestCase):
+    # Tests de las trazas del SPEC 08
+    MESSAGE = "me cobrasteis dos veces, quiero un descuento"
+
+    def setUp(self):
+        env = {
+            "CLASSIFIER_MODE": "keywords",
+            "CLASSIFIER_TRACE": "true",
+            "GEMINI_API_KEY": FAKE_KEY,
+            "GEMINI_MODEL": "fake-model",
+        }
+        patcher = mock.patch.dict(os.environ, env)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def run_classify(self, message=None, **urlopen_args):
+        # Devuelve (resultado, stderr). Gemini va simulado, nunca hay red
+        if message is None:
+            message = self.MESSAGE
+        with mock.patch("urllib.request.urlopen", **urlopen_args):
+            with mock.patch("sys.stderr", new_callable=io.StringIO) as err:
+                result = classifier.classify(message)
+        return result, err.getvalue()
+
+    def trace_lines(self, err):
+        return [line for line in err.splitlines() if line.startswith("trace ")]
+
+    def test_keywords_mode_trace(self):
+        _, err = self.run_classify()
+        self.assertRegex(
+            err,
+            r"^trace mode=keywords method=keywords department=Comercial "
+            r"matches=descuento ms=\d+\n$",
+        )
+
+    def test_keywords_mode_lists_every_match(self):
+        _, err = self.run_classify("quiero una oferta y un descuento")
+        self.assertIn("matches=oferta,descuento ", err)
+
+    def test_keywords_mode_without_matches(self):
+        _, err = self.run_classify("hola")
+        self.assertRegex(
+            err,
+            r"^trace mode=keywords method=keywords department=Soporte Técnico "
+            r"matches=none ms=\d+\n$",
+        )
+
+    def test_gemini_answer_trace_compares_with_keywords(self):
+        os.environ["CLASSIFIER_MODE"] = "gemini"
+        # Gemini dice Agradecimientos y las palabras clave habrían dicho Comercial
+        _, err = self.run_classify(return_value=fake_response("Agradecimientos"))
+        self.assertRegex(
+            err,
+            r"^trace mode=gemini method=gemini department=Agradecimientos "
+            r"gemini=Agradecimientos keywords=Comercial ms=\d+\n$",
+        )
+
+    def test_gemini_failure_trace_has_reason_and_fallback(self):
+        os.environ["CLASSIFIER_MODE"] = "gemini"
+        _, err = self.run_classify(side_effect=socket.timeout())
+        # El aviso de siempre se mantiene y se añade una sola traza
+        self.assertIn("gemini failed: timeout\n", err)
+        lines = self.trace_lines(err)
+        self.assertEqual(len(lines), 1)
+        self.assertRegex(
+            lines[0],
+            r"^trace mode=gemini method=keywords department=Comercial "
+            r"reason=timeout matches=descuento ms=\d+$",
+        )
+
+    def test_gemini_failure_without_key_has_reason(self):
+        os.environ["CLASSIFIER_MODE"] = "gemini"
+        os.environ["GEMINI_API_KEY"] = ""
+        _, err = self.run_classify()
+        self.assertIn("reason=no api key", err)
+
+    def test_one_trace_line_per_classification(self):
+        for mode in ("keywords", "gemini"):
+            os.environ["CLASSIFIER_MODE"] = mode
+            _, err = self.run_classify(return_value=fake_response("Comercial"))
+            self.assertEqual(len(self.trace_lines(err)), 1)
+
+    def test_trace_off_writes_nothing(self):
+        for value in ("false", "", "1", "yes"):
+            os.environ["CLASSIFIER_TRACE"] = value
+            _, err = self.run_classify()
+            self.assertEqual(err, "")
+
+    def test_trace_missing_variable_writes_nothing(self):
+        os.environ.pop("CLASSIFIER_TRACE")
+        _, err = self.run_classify()
+        self.assertEqual(err, "")
+
+    def test_trace_switch_ignores_case(self):
+        os.environ["CLASSIFIER_TRACE"] = "TRUE"
+        _, err = self.run_classify()
+        self.assertTrue(err.startswith("trace "))
+
+    def test_trace_off_keeps_old_stderr_when_gemini_fails(self):
+        os.environ["CLASSIFIER_MODE"] = "gemini"
+        os.environ["CLASSIFIER_TRACE"] = "false"
+        _, err = self.run_classify(side_effect=socket.timeout())
+        self.assertEqual(err, "gemini failed: timeout\n")
+
+    def test_trace_never_has_key_or_message(self):
+        cases = [
+            ("keywords", {}),
+            ("gemini", {"return_value": fake_response("Comercial")}),
+            ("gemini", {"side_effect": socket.timeout()}),
+            ("gemini", {"side_effect": urllib.error.HTTPError("http://x", 400, "Bad", {}, None)}),
+        ]
+        for mode, urlopen_args in cases:
+            os.environ["CLASSIFIER_MODE"] = mode
+            _, err = self.run_classify(**urlopen_args)
+            self.assertIn("trace ", err)
+            self.assertNotIn(FAKE_KEY, err)
+            self.assertNotIn("cobrasteis", err)
+            self.assertNotIn(self.MESSAGE, err)
+
+    def test_trace_does_not_change_the_department(self):
+        cases = [
+            ("keywords", {}),
+            ("gemini", {"return_value": fake_response("Agradecimientos")}),
+            ("gemini", {"side_effect": socket.timeout()}),
+        ]
+        for mode, urlopen_args in cases:
+            os.environ["CLASSIFIER_MODE"] = mode
+            os.environ["CLASSIFIER_TRACE"] = "true"
+            with_trace, _ = self.run_classify(**urlopen_args)
+            os.environ["CLASSIFIER_TRACE"] = "false"
+            without_trace, _ = self.run_classify(**urlopen_args)
+            self.assertEqual(with_trace, without_trace)
+
+    def test_empty_message_writes_no_trace(self):
+        _, err = self.run_classify("   ")
+        self.assertEqual(err, "")
+
+    def test_keywords_decision_matches_classify_by_keywords(self):
+        for message in ["gracias", "hola", "no puedo entrar", "oferta y descuento"]:
+            department, _ = classifier.keywords_decision(message)
+            self.assertEqual(department, classifier.classify_by_keywords(message))
 
 
 if __name__ == "__main__":

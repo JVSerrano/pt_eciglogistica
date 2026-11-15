@@ -3,6 +3,7 @@ import os
 import re
 import socket
 import sys
+import time
 import unicodedata
 import urllib.error
 import urllib.request
@@ -74,15 +75,20 @@ def normalize(text):
     return "".join(c for c in decomposed if unicodedata.category(c) != "Mn")
 
 
-def count_matches(text, words):
-    # Cuenta cuántas palabras clave aparecen al comienzo de una palabra.
+def find_matches(text, words):
+    # Devuelve las palabras clave que aparecen al comienzo de una palabra.
     # Sin \b al final, "oferta" también coincide con "ofertas" y "ofertamos",
     # pero no con "superoferta" (el \b del principio lo impide).
-    total = 0
+    found = []
     for word in words:
         if re.search(r"\b" + re.escape(word), text):
-            total += 1
-    return total
+            found.append(word)
+    return found
+
+
+def count_matches(text, words):
+    # Cuenta cuántas palabras clave coinciden
+    return len(find_matches(text, words))
 
 
 def ask_gemini(message):
@@ -141,20 +147,28 @@ def ask_gemini(message):
     raise GeminiError("invalid answer")
 
 
-def classify_by_keywords(message):
-    # Clasificación por palabras clave (SPEC 03). Devuelve el nombre del departamento.
+def keywords_decision(message):
+    # Clasificación por palabras clave (SPEC 03).
+    # Devuelve el departamento y la lista de palabras que coincidieron en él
+    # (lista vacía si se usa el departamento por defecto).
     text = normalize(message)
 
     best_department = DEFAULT_DEPARTMENT
-    best_count = 0
+    best_matches = []
     for department, words in KEYWORDS:
-        count = count_matches(text, words)
+        matches = find_matches(text, words)
         # Solo cambia si hay más coincidencias, así el empate lo gana el primero
-        if count > best_count:
+        if len(matches) > len(best_matches):
             best_department = department
-            best_count = count
+            best_matches = matches
 
-    return best_department
+    return best_department, best_matches
+
+
+def classify_by_keywords(message):
+    # Devuelve solo el nombre del departamento (lo que ya devolvía antes)
+    department, _ = keywords_decision(message)
+    return department
 
 
 def get_mode():
@@ -165,19 +179,87 @@ def get_mode():
     return "keywords"
 
 
+def trace_enabled():
+    # Las trazas solo se activan con CLASSIFIER_TRACE=true (sin importar mayúsculas)
+    return os.environ.get("CLASSIFIER_TRACE", "").strip().lower() == "true"
+
+
+def write_trace(fields):
+    # Escribe una sola línea "trace clave=valor ..." en stderr.
+    # Solo recibe datos ya calculados: nunca la clave ni el mensaje del cliente.
+    if not trace_enabled():
+        return
+    parts = [key + "=" + str(value) for key, value in fields]
+    sys.stderr.write("trace " + " ".join(parts) + "\n")
+
+
+def format_matches(matches):
+    # Lista de palabras separadas por comas, o "none" si no hay ninguna
+    if len(matches) == 0:
+        return "none"
+    return ",".join(matches)
+
+
+def elapsed_ms(start):
+    # Milisegundos desde el instante start (de time.monotonic)
+    return int((time.monotonic() - start) * 1000)
+
+
 def classify(message):
     # Mensaje vacío o solo espacios: error previsto, sin llamar a Gemini
     if message.strip() == "":
         return {"ok": False, "error_code": "EMPTY_MESSAGE"}
 
-    if get_mode() == "gemini":
+    start = time.monotonic()
+    mode = get_mode()
+
+    reason = ""
+    if mode == "gemini":
         try:
-            return {"ok": True, "department": ask_gemini(message)}
+            department = ask_gemini(message)
         except GeminiError as error:
             # Reserva: se avisa en stderr (sin clave ni mensaje) y se usan las palabras clave
-            sys.stderr.write("gemini failed: " + str(error) + "\n")
+            reason = str(error)
+            sys.stderr.write("gemini failed: " + reason + "\n")
+        else:
+            # Gemini ha respondido: se mide el tiempo y se compara con las palabras clave
+            # (solo si las trazas están activas, para no hacer trabajo de más)
+            if trace_enabled():
+                gemini_ms = elapsed_ms(start)
+                keywords_department, _ = keywords_decision(message)
+                write_trace([
+                    ("mode", mode),
+                    ("method", "gemini"),
+                    ("department", department),
+                    ("gemini", department),
+                    ("keywords", keywords_department),
+                    ("ms", gemini_ms),
+                ])
+            return {"ok": True, "department": department}
 
-    return {"ok": True, "department": classify_by_keywords(message)}
+    # Aquí se llega en modo keywords o en modo gemini con reserva por fallo
+    fallback_ms = elapsed_ms(start)
+    department, matches = keywords_decision(message)
+
+    if mode == "gemini":
+        write_trace([
+            ("mode", mode),
+            ("method", "keywords"),
+            ("department", department),
+            ("reason", reason),
+            ("matches", format_matches(matches)),
+            ("ms", fallback_ms),
+        ])
+    else:
+        write_trace([
+            ("mode", mode),
+            ("method", "keywords"),
+            ("department", department),
+            ("matches", format_matches(matches)),
+            ("ms", elapsed_ms(start)),
+        ])
+
+    return {"ok": True, "department": department}
 
 
 def main():

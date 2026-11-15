@@ -1,6 +1,6 @@
 # SPEC 08 — Trazas del clasificador por consola
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 03 (Implementado), SPEC 04 (Implementado), SPEC 05 (Implementado), SPEC 07 (Implementado)
 > **Fecha:** 2026-11-15
 > **Objetivo:** Ver por consola, en tiempo real, cómo clasifica cada consulta: qué modo está activo, qué método ha decidido (Gemini o palabras clave), qué ha respondido Gemini y qué palabras clave han coincidido, para poder comprobar si la IA hace bien su trabajo.
@@ -75,16 +75,16 @@ Solo `true` (sin importar mayúsculas) activa las trazas. Cualquier otro valor, 
 
 ## Criterios de aceptación
 
-- [ ] Con `CLASSIFIER_TRACE=true`, cada consulta escribe una línea de traza en `docker compose logs -f web`.
-- [ ] En modo `keywords` la traza muestra el departamento y las palabras que coincidieron.
-- [ ] En modo `gemini`, si Gemini responde, la traza muestra lo que dijo la IA y lo que habrían dado las palabras clave.
-- [ ] En modo `gemini`, si Gemini falla, la traza muestra el motivo y que se usó la reserva.
-- [ ] Con `CLASSIFIER_TRACE=false` o sin la variable, el `stderr` queda como antes (solo `gemini failed: ...` si falla).
-- [ ] La traza nunca contiene la clave de API ni el texto completo del mensaje.
-- [ ] El departamento elegido no cambia respecto al SPEC 07 en ningún caso.
-- [ ] El formato de salida JSON del script no cambia.
-- [ ] Todos los tests anteriores siguen pasando y hay tests nuevos para las trazas.
-- [ ] El código está en inglés básico y los comentarios en español.
+- [x] Con `CLASSIFIER_TRACE=true`, cada consulta escribe una línea de traza en `docker compose logs -f web`.
+- [x] En modo `keywords` la traza muestra el departamento y las palabras que coincidieron.
+- [x] En modo `gemini`, si Gemini responde, la traza muestra lo que dijo la IA y lo que habrían dado las palabras clave.
+- [x] En modo `gemini`, si Gemini falla, la traza muestra el motivo y que se usó la reserva.
+- [x] Con `CLASSIFIER_TRACE=false` o sin la variable, el `stderr` queda como antes (solo `gemini failed: ...` si falla).
+- [x] La traza nunca contiene la clave de API ni el texto completo del mensaje.
+- [x] El departamento elegido no cambia respecto al SPEC 07 en ningún caso.
+- [x] El formato de salida JSON del script no cambia.
+- [x] Todos los tests anteriores siguen pasando y hay tests nuevos para las trazas.
+- [x] El código está en inglés básico y los comentarios en español.
 
 ## Decisiones
 
@@ -106,15 +106,24 @@ Solo `true` (sin importar mayúsculas) activa las trazas. Cualquier otro valor, 
 
 ## Progreso de la implementación
 
-Rama: pendiente de crear (`spec-08-trazas-clasificador`). Última actualización: 2026-11-15.
+Rama: `spec-08-trazas-clasificador`. Última actualización: 2026-11-15.
 
-- [ ] Paso 1: interruptor `CLASSIFIER_TRACE`.
-- [ ] Paso 2: palabras clave que coincidieron.
-- [ ] Paso 3: traza del modo `keywords`.
-- [ ] Paso 4: trazas del modo `gemini`.
-- [ ] Paso 5: tests.
-- [ ] Paso 6: prueba en vivo.
-- [ ] Paso 7: cierre.
+- [x] Paso 1: interruptor `CLASSIFIER_TRACE`.
+- [x] Paso 2: palabras clave que coincidieron.
+- [x] Paso 3: traza del modo `keywords`.
+- [x] Paso 4: trazas del modo `gemini`.
+- [x] Paso 5: tests.
+- [x] Paso 6: prueba en vivo.
+- [x] Paso 7: cierre.
+
+### Notas de la implementación
+
+- **Cómo ver las trazas:** poner `CLASSIFIER_TRACE=true` en `.env`, recrear el contenedor con `docker compose up -d` y ejecutar `docker compose logs -f web`. Las líneas salen con el prefijo `classifier: trace ...`. Para ver el flujo de la IA hace falta además `CLASSIFIER_MODE=gemini`.
+- **Causa de la duda inicial:** `.env` tenía `CLASSIFIER_MODE=keywords`, así que Gemini nunca se llamaba. Con `gemini` la IA responde en unos 600-800 ms.
+- **Prueba en vivo:** con Gemini real las trazas llegan al registro de PHP. Si Gemini falla, PHP escribe en una sola entrada el aviso `gemini failed: ...` y la traza (probado en el script, no en vivo).
+- **Cosmético:** Apache escapa las tildes UTF-8 en el registro (`T\xc3\xa9cnico`). El dato es correcto.
+- **Pendiente, fuera de este spec:** que el modo por defecto del código sea `gemini` con reserva por palabras clave (hoy es `keywords` si falta la variable, como fija el SPEC 04). Va en otro spec.
+- **Estado final de `.env`:** `CLASSIFIER_MODE=gemini` y `CLASSIFIER_TRACE=false`.
 
 ## Lo que **no** está en este spec
 
