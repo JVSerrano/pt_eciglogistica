@@ -77,14 +77,14 @@ Nueva columna entre "Departamento" y "Estado":
 
 ## Criterios de aceptación
 
-- [ ] La salida del clasificador incluye `method` en las clasificaciones correctas.
-- [ ] Con Gemini respondiendo, el listado muestra `IA`.
-- [ ] En modo `keywords`, o con Gemini fallando, el listado muestra `Palabras clave`.
-- [ ] Consultas `pending` o `error` muestran `—`.
-- [ ] La base de datos rechaza un estado incoherente con `classified_by`.
-- [ ] El departamento elegido no cambia respecto al SPEC 07.
-- [ ] Los tests anteriores siguen pasando y hay tests nuevos.
-- [ ] Código en inglés básico y comentarios en español.
+- [x] La salida del clasificador incluye `method` en las clasificaciones correctas.
+- [x] Con Gemini respondiendo, el listado muestra `IA`.
+- [x] En modo `keywords`, o con Gemini fallando, el listado muestra `Palabras clave`.
+- [x] Consultas `pending` o `error` muestran `—`.
+- [x] La base de datos rechaza un estado incoherente con `classified_by`.
+- [x] El departamento elegido no cambia respecto al SPEC 07.
+- [x] Los tests anteriores siguen pasando y hay tests nuevos.
+- [x] Código en inglés básico y comentarios en español.
 
 ## Decisiones
 
@@ -103,3 +103,22 @@ Nueva columna entre "Departamento" y "Estado":
 ## Lo que **no** está en este spec
 
 - Filtros y paginación del listado, motivo de la reserva, tiempos.
+
+## Progreso de la implementación
+
+Rama: `spec-09-metodo-clasificacion-listado`. Última actualización: 2026-11-15.
+
+- [x] Paso 1: clasificador devuelve `method`.
+- [x] Paso 2: columna `classified_by` y restricciones en `init.sql`.
+- [x] Paso 3: API guarda y devuelve `classified_by`.
+- [x] Paso 4: columna "Clasificado por" en el listado.
+- [x] Paso 5: base recreada (`down -v`) y prueba en vivo en modo `gemini` y `keywords`.
+- [x] Paso 6: cierre.
+
+### Notas de la implementación
+
+- **Orden de columnas:** "Clasificado por" es la última, después de "Fecha / hora" (ajuste pedido tras ver el primer resultado).
+- **Ancho:** `.container` pasa de 960px a 1200px para que la tabla quepa sin barra horizontal. El formulario no cambia, tiene su propio límite de 600px.
+- **Móvil (hasta 640px):** la columna de etiquetas pasa de 110px a 130px (cabe "Clasificado por") y cada fila tiene 14px de relleno vertical para separar mejor unas etiquetas de otras.
+- **Pruebas:** la API se probó contra una base temporal (Gemini real, clave inválida con reserva) y luego en vivo tras recrear el volumen. No hay tests automáticos de PHP en el proyecto, así que el caso de un `method` inválido (`AI_INVALID_RESPONSE`) no tiene test.
+- **Consultas antiguas:** al recrear el volumen se perdieron las consultas de prueba. No hay datos antiguos que rellenar.

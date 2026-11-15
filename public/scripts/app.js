@@ -42,6 +42,15 @@
     keywords: 'Palabras clave'
   };
 
+  // Clase de color de cada departamento (los colores están en el CSS)
+  var DEPARTMENT_CLASS = {
+    'Soporte Técnico': 'dept-support',
+    'Comercial': 'dept-sales',
+    'Agradecimientos': 'dept-thanks'
+  };
+
+  var MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+
   var loadingEl = document.getElementById('list-loading');
   var emptyEl = document.getElementById('list-empty');
   var errorEl = document.getElementById('list-error');
@@ -73,6 +82,16 @@
     return td;
   }
 
+  // Celda con una pastilla de color dentro (departamento y estado)
+  function createBadgeCell(label, text, badgeClass) {
+    var td = createCell(label, '', 'nowrap');
+    var badge = document.createElement('span');
+    badge.className = 'badge ' + badgeClass;
+    badge.textContent = text;
+    td.appendChild(badge);
+    return td;
+  }
+
   // Pasa "2026-11-11 17:28:35" a "11/11/2026 17:28:35" (solo reordena el texto, sin zonas horarias)
   function formatDate(value) {
     var match = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}:\d{2}:\d{2})/.exec(value || '');
@@ -80,6 +99,16 @@
       return value || '—'; // formato inesperado: se enseña tal cual
     }
     return match[3] + '/' + match[2] + '/' + match[1] + ' ' + match[4];
+  }
+
+  // Pasa "2026-11-11 17:28:35" a "11 nov, 17:28" (con el año si no es el actual)
+  function formatShortDate(value) {
+    var match = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}:\d{2})/.exec(value || '');
+    if (!match) {
+      return value || '—';
+    }
+    var year = match[1] === String(new Date().getFullYear()) ? '' : ' ' + match[1];
+    return parseInt(match[3], 10) + ' ' + MONTHS[parseInt(match[2], 10) - 1] + year + ', ' + match[4];
   }
 
   // Celda del mensaje: texto recortado a 3 líneas y un botón para expandir o contraer
@@ -141,12 +170,28 @@
       // Sin método (pendiente o con error) se muestra un guion
       var method = item.classified_by ? (METHOD_TEXT[item.classified_by] || item.classified_by) : '—';
 
+      var deptClass = DEPARTMENT_CLASS[item.department];
+
+      // El color de la fila depende del departamento (sin departamento, la fila queda neutra)
+      if (deptClass) {
+        tr.className = deptClass;
+      }
+
       tr.appendChild(createCell('Nombre', item.client_name, 'name'));
       tr.appendChild(createMessageCell(item.message));
-      tr.appendChild(createCell('Departamento', item.department || '—', 'nowrap'));
-      tr.appendChild(createCell('Estado', status, 'nowrap'));
-      tr.appendChild(createCell('Fecha / hora', formatDate(item.created_at), 'nowrap'));
-      tr.appendChild(createCell('Clasificado por', method, 'nowrap'));
+      if (item.department) {
+        tr.appendChild(createBadgeCell('Departamento', item.department, 'badge-dept'));
+      } else {
+        tr.appendChild(createCell('Departamento', '—', 'nowrap'));
+      }
+      tr.appendChild(createCell('Clasificado por', method, 'nowrap muted'));
+      tr.appendChild(createBadgeCell('Estado', status, 'badge-status-' + item.status));
+
+      // Fecha corta a la vista; la completa queda en el atributo title
+      var dateCell = createCell('Fecha / hora', formatShortDate(item.created_at), 'nowrap');
+      dateCell.title = formatDate(item.created_at);
+      tr.appendChild(dateCell);
+
       listBodyEl.appendChild(tr);
     });
   }

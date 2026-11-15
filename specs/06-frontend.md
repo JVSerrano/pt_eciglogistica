@@ -82,13 +82,24 @@ El mensaje se muestra en una zona con `aria-live="polite"` para que lo lean los 
 
 ### Pestaña "Listado"
 
-Tabla con estas columnas, en este orden: **Nombre**, **Mensaje**, **Departamento**, **Estado**, **Fecha / hora**.
+Tabla con estas columnas, en este orden: **Nombre**, **Mensaje**, **Departamento**, **Clasificado por**, **Estado**, **Fecha / hora**. (La columna "Clasificado por" la añadió el SPEC 09; el orden actual agrupa lo que se lee junto.)
+
+Diseño visual (mejora posterior de UX/UI, sin iconos):
+
+- **Color por departamento:** cada fila lleva un fondo suave, una barra de color a la izquierda y el departamento en una pastilla del mismo color. Soporte Técnico en azul, Comercial en ámbar y Agradecimientos en verde. Las filas sin departamento quedan blancas y sin barra. El color nunca es el único indicador: el departamento siempre está escrito.
+- **El rojo solo para errores:** el rojo de marca no se usa como color de departamento, para que un error destaque.
+- **Filas separadas:** hueco de 8 px entre una consulta y la siguiente, con esquinas redondeadas, para que cada una se vea como una pieza propia.
+- **Estado como pastilla:** `Clasificada` en gris con borde, `Pendiente` en gris con borde discontinuo y cursiva, `Error` en rojo suave.
+- **"Clasificado por" discreto:** texto gris y más pequeño, porque es un dato secundario.
+- **Fecha corta:** `11 nov, 17:28` (con el año si no es el actual). La fecha completa `DD/MM/AAAA HH:MM:SS` queda en el atributo `title` (se ve al pasar el ratón).
+- **Cabecera clara:** fondo gris muy claro con línea roja inferior, en lugar de roja a todo ancho.
+- **Móvil:** la barra de color pasa a ser el borde izquierdo de la tarjeta.
 
 - Orden: el que devuelve la API (la más reciente primero). No se reordena en el navegador.
 - Los mensajes largos se recortan a 3 líneas. Si el texto no cabe, aparece un botón **Mostrar más** que lo expande y pasa a **Mostrar menos** para contraerlo. Si cabe entero, no hay botón. Funciona con textos largos sin espacios.
 - `department` vacío se muestra como `—`.
 - `status` se muestra en español: `pending` → "Pendiente", `classified` → "Clasificada", `error` → "Error".
-- `Fecha / hora` es `created_at` en formato español `DD/MM/AAAA HH:MM:SS`. Solo se reordena el texto de la API, sin conversión de zona horaria.
+- `Fecha / hora` es `created_at` reordenado en español, sin conversión de zona horaria: formato corto a la vista y `DD/MM/AAAA HH:MM:SS` en el `title` (ver "Diseño visual").
 - Estados de la pestaña: "Cargando..." mientras espera, "Todavía no hay consultas." si la lista está vacía, y "No se ha podido cargar el listado." con un botón **Reintentar** si la petición falla.
 - Un botón **Actualizar** vuelve a pedir la lista.
 - En pantallas estrechas (hasta 640 px) cada consulta se muestra como una tarjeta con sus cinco datos en filas "etiqueta + valor", de modo que se ve todo sin desplazamiento horizontal. En pantallas anchas se mantiene la tabla.
@@ -122,7 +133,8 @@ El texto de `client_name` y `message` lo escribe el usuario y la API lo devuelve
 - [ ] Si la API devuelve `422` o `500`, o está caída, se muestra el mensaje correspondiente de la tabla y **se conserva** lo escrito en el formulario.
 - [ ] Un mensaje con `<script>alert(1)</script>` y otro con `<img src=x onerror=alert(1)>` se ven como texto en el listado y no ejecutan nada.
 - [ ] Las tildes y la `ñ` se ven bien en el formulario, en los mensajes y en el listado.
-- [ ] El listado muestra las columnas Nombre, Mensaje, Departamento, Estado y Fecha / hora (como `DD/MM/AAAA HH:MM:SS`), con `—` cuando no hay departamento.
+- [ ] El listado muestra las columnas Nombre, Mensaje, Departamento, Clasificado por, Estado y Fecha / hora (corta, con la completa `DD/MM/AAAA HH:MM:SS` al pasar el ratón), con `—` cuando no hay departamento.
+- [ ] Cada fila tiene el color de su departamento (fondo, barra y pastilla); las filas sin departamento son neutras y el rojo solo aparece en el estado "Error".
 - [ ] Con la lista vacía se muestra "Todavía no hay consultas.". Si la petición falla se muestra "No se ha podido cargar el listado." con un botón **Reintentar** que funciona.
 - [ ] Un mensaje de 2000 caracteres sin espacios no rompe el diseño (ni en el listado ni en móvil).
 - [ ] Un mensaje largo se ve recortado a 3 líneas con **Mostrar más**, que lo expande y pasa a **Mostrar menos**. Un mensaje corto no muestra el botón.

@@ -126,12 +126,13 @@ h1 {
 /* Solo la tabla se desplaza en horizontal, no la página */
 .table-wrap {
   overflow-x: auto;
-  border: 1px solid var(--border);
 }
 
 .table {
   width: 100%;
-  border-collapse: collapse;
+  /* Hueco entre filas para separar bien una consulta de otra */
+  border-collapse: separate;
+  border-spacing: 0 8px;
 }
 
 .table th,
@@ -142,10 +143,97 @@ h1 {
   border-bottom: 1px solid var(--border);
 }
 
+/* Cabecera clara con línea roja: así destacan los colores de cada departamento */
 .table th {
-  color: var(--white);
-  background: var(--red);
+  color: var(--text);
+  background: #f6f6f6;
+  border-bottom: 2px solid var(--red);
   white-space: nowrap;
+}
+
+/* Colores por departamento: fondo suave de la fila, barra a la izquierda y pastilla.
+   El rojo se reserva para los errores */
+/* El fondo va en las celdas (no en la fila) para poder redondear las esquinas */
+.table td {
+  background: var(--dept-bg, var(--white));
+  border-top: 1px solid var(--border);
+}
+
+.table td:first-child {
+  border-left: 1px solid var(--border);
+  border-radius: 6px 0 0 6px;
+}
+
+.table td:last-child {
+  border-right: 1px solid var(--border);
+  border-radius: 0 6px 6px 0;
+}
+
+.table tr.dept-support {
+  --dept-bg: #eef4fb;
+  --dept-color: #2f6db5;
+}
+
+.table tr.dept-sales {
+  --dept-bg: #fdf6e7;
+  --dept-color: #8a5a12;
+  --dept-bar: #b7791f;
+}
+
+.table tr.dept-thanks {
+  --dept-bg: #eef7f0;
+  --dept-color: #276749;
+  --dept-bar: #2f855a;
+}
+
+/* Barra de color a la izquierda de la fila */
+.table td:first-child {
+  box-shadow: inset 4px 0 0 var(--dept-bar, var(--dept-color, transparent));
+}
+
+/* Dato secundario: más pequeño y en gris */
+.table td.muted {
+  color: #666666;
+  font-size: 0.9rem;
+}
+
+/* Pastillas */
+.badge {
+  display: inline-block;
+  padding: 2px 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.5;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  /* En las tarjetas de móvil (grid) evita que la pastilla ocupe todo el ancho */
+  justify-self: start;
+}
+
+.badge-dept {
+  color: var(--dept-color);
+  background: var(--white);
+  border-color: var(--dept-bar, var(--dept-color));
+}
+
+/* Estados sin colores de departamento: gris para normal, rojo solo para error */
+.badge-status-classified {
+  color: #444444;
+  background: var(--white);
+  border-color: #bbbbbb;
+}
+
+.badge-status-pending {
+  color: #666666;
+  background: var(--white);
+  border: 1px dashed #999999;
+  font-style: italic;
+}
+
+.badge-status-error {
+  color: var(--red-dark);
+  background: #fdecee;
+  border-color: var(--red);
 }
 
 /* Texto del usuario: respeta saltos de línea y parte palabras largas */
@@ -248,8 +336,29 @@ h1 {
   .table tr {
     margin-bottom: 12px;
     border: 1px solid var(--border);
-    border-left: 4px solid var(--red);
+    border-left: 4px solid var(--dept-bar, var(--dept-color, var(--border)));
     border-radius: 4px;
+  }
+
+  /* En móvil la barra ya es el borde de la tarjeta, que se separa con su propio margen */
+  .table {
+    border-spacing: 0;
+  }
+
+  .table tr {
+    overflow: hidden;
+    background: var(--dept-bg, var(--white));
+  }
+
+  .table td,
+  .table td:first-child,
+  .table td:last-child {
+    border-top: 0;
+    border-left: 0;
+    border-right: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
   }
 
   .table td {
