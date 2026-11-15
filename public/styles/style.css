@@ -1,0 +1,318 @@
+/* Colores del proyecto: blanco y rojo */
+:root {
+  --red: #DE2C37;
+  --red-dark: #b8222c;
+  --white: #ffffff;
+  --text: #222222;
+  --border: #e3e3e3;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  color: var(--text);
+  background: var(--white);
+  line-height: 1.5;
+}
+
+.site-header {
+  padding: 12px 16px;
+  border-bottom: 3px solid var(--red);
+  display: flex;
+  justify-content: center;
+}
+
+.logo {
+  display: block;
+  height: 48px;
+  width: auto;
+  max-width: 100%;
+}
+
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+h1 {
+  font-size: 1.4rem;
+  margin: 0 0 16px;
+  color: var(--red);
+}
+
+/* Pestañas */
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tab {
+  padding: 10px 16px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--white);
+  border: 0;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+}
+
+.tab:hover {
+  color: var(--red);
+}
+
+.tab.is-active {
+  color: var(--red);
+  border-bottom-color: var(--red);
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--red);
+  outline-offset: 2px;
+}
+
+/* El atributo hidden debe ganar siempre */
+[hidden] {
+  display: none !important;
+}
+
+/* Botones */
+.btn {
+  padding: 8px 16px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--white);
+  background: var(--red);
+  border: 0;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background: var(--red-dark);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Listado */
+.list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.list-header h1 {
+  margin: 0;
+}
+
+.state {
+  padding: 24px 0;
+  text-align: center;
+}
+
+/* Solo la tabla se desplaza en horizontal, no la página */
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 8px 12px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+}
+
+.table th {
+  color: var(--white);
+  background: var(--red);
+  white-space: nowrap;
+}
+
+/* Texto del usuario: respeta saltos de línea y parte palabras largas */
+.table td {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.table td.nowrap {
+  white-space: nowrap;
+}
+
+.table td.name {
+  min-width: 170px;
+}
+
+.table td.message {
+  min-width: 220px;
+}
+
+/* Formulario */
+.form {
+  max-width: 600px;
+}
+
+.field {
+  margin-bottom: 16px;
+}
+
+.field label {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.field input,
+.field textarea {
+  width: 100%;
+  padding: 8px 12px;
+  font: inherit;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.field textarea {
+  resize: vertical;
+}
+
+.field input:focus-visible,
+.field textarea:focus-visible {
+  outline: 2px solid var(--red);
+  outline-offset: 1px;
+}
+
+.field-error {
+  margin: 4px 0 0;
+  color: var(--red-dark);
+  font-size: 0.9rem;
+}
+
+/* Oculto a la vista, pero lo leen los lectores de pantalla */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Móvil: cada consulta es una tarjeta con todos sus datos, sin desplazamiento horizontal */
+@media (max-width: 640px) {
+  .container {
+    padding: 12px;
+  }
+
+  .table-wrap {
+    overflow-x: visible;
+    border: 0;
+  }
+
+  .table,
+  .table tbody,
+  .table tr,
+  .table td {
+    display: block;
+    width: 100%;
+  }
+
+  /* La cabecera se oculta a la vista pero sigue disponible para lectores de pantalla */
+  .table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .table tr {
+    margin-bottom: 12px;
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--red);
+    border-radius: 4px;
+  }
+
+  .table td {
+    display: grid;
+    grid-template-columns: 110px minmax(0, 1fr);
+    gap: 8px;
+    min-width: 0;
+    padding: 6px 12px;
+    white-space: pre-wrap;
+  }
+
+  .table td:last-child {
+    border-bottom: 0;
+  }
+
+  /* Etiqueta de cada dato */
+  .table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--red);
+  }
+
+  /* Anula los anchos mínimos y el nowrap de escritorio */
+  .table td.name,
+  .table td.message {
+    min-width: 0;
+  }
+
+  .table td.nowrap {
+    white-space: pre-wrap;
+  }
+}
+
+/* Mensajes largos: recortados a 3 líneas con botón "Mostrar más" */
+.msg-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.msg-text.is-collapsed {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+}
+
+.msg-toggle {
+  padding: 0;
+  margin-top: 4px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--red);
+  background: none;
+  border: 0;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.msg-toggle:hover {
+  color: var(--red-dark);
+}
+
+.msg-toggle:focus-visible {
+  outline: 2px solid var(--red);
+  outline-offset: 2px;
+}

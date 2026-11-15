@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ecig Logística - Consultas</title>
+  <!-- Toastify, descargado en local (no se carga nada de terceros) -->
+  <link rel="stylesheet" href="vendor/toastify/toastify.css">
+  <link rel="stylesheet" href="styles/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <img src="img/logo.png" alt="Ecig Logística" class="logo">
+  </header>
+
+  <main class="container">
+    <!-- Botones de las pestañas -->
+    <div class="tabs" role="tablist" aria-label="Secciones">
+      <button type="button" role="tab" id="tab-new" class="tab is-active"
+              aria-selected="true" aria-controls="panel-new" tabindex="0">
+        Nueva consulta
+      </button>
+      <button type="button" role="tab" id="tab-list" class="tab"
+              aria-selected="false" aria-controls="panel-list" tabindex="-1">
+        Listado
+      </button>
+    </div>
+
+    <!-- Pestaña 1: formulario (se completa en el Paso 3) -->
+    <section id="panel-new" class="panel" role="tabpanel" aria-labelledby="tab-new">
+      <h1>Nueva consulta</h1>
+      <form id="consultation-form" class="form" novalidate>
+        <div class="field">
+          <label for="client-name">Nombre</label>
+          <input type="text" id="client-name" name="client_name" maxlength="100"
+                 autocomplete="name" aria-describedby="client-name-error">
+          <p id="client-name-error" class="field-error" hidden></p>
+        </div>
+
+        <div class="field">
+          <label for="message">Mensaje</label>
+          <textarea id="message" name="message" rows="6" maxlength="2000"
+                    aria-describedby="message-error"></textarea>
+          <p id="message-error" class="field-error" hidden></p>
+        </div>
+
+        <button type="submit" id="submit-btn" class="btn">Enviar</button>
+
+        <!-- Copia del mensaje para lectores de pantalla (el aviso visible es el toast) -->
+        <p id="form-result" class="sr-only" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <!-- Pestaña 2: listado (se completa en el Paso 2) -->
+    <section id="panel-list" class="panel" role="tabpanel" aria-labelledby="tab-list" hidden>
+      <div class="list-header">
+        <h1>Listado</h1>
+        <button type="button" id="refresh-btn" class="btn">Actualizar</button>
+      </div>
+
+      <!-- Estados del listado: solo se ve uno a la vez -->
+      <p id="list-loading" class="state" hidden>Cargando...</p>
+      <p id="list-empty" class="state" hidden>Todavía no hay consultas.</p>
+      <div id="list-error" class="state" hidden>
+        <p>No se ha podido cargar el listado.</p>
+        <button type="button" id="retry-btn" class="btn">Reintentar</button>
+      </div>
+
+      <div id="table-wrap" class="table-wrap" hidden>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Mensaje</th>
+              <th>Departamento</th>
+              <th>Estado</th>
+              <th>Fecha / hora</th>
+            </tr>
+          </thead>
+          <tbody id="list-body"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="vendor/toastify/toastify.js"></script>
+  <script src="scripts/app.js"></script>
+</body>
+</html>

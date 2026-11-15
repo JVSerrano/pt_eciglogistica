@@ -1,6 +1,6 @@
 # SPEC 06 — Frontend: formulario de consultas y listado
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 05 (Implementado)
 > **Fecha:** 2026-11-14
 > **Objetivo:** Una página web con dos pestañas, "Nueva consulta" y "Listado", que usa la API del SPEC 05 para enviar una consulta, mostrar a qué departamento ha ido y listar todas las consultas guardadas.
@@ -40,9 +40,11 @@ Archivos nuevos:
 
     PT_Eciglogistica/
     ├── public/
-    │   ├── index.html      (nuevo: estructura de la página y las dos pestañas)
-    │   ├── style.css       (nuevo: estilos)
-    │   └── app.js          (nuevo: pestañas, formulario y listado)
+    │   ├── index.html          (nuevo: estructura de la página y las dos pestañas)
+    │   ├── img/logo.png        (nuevo: logo)
+    │   ├── vendor/toastify/    (nuevo: toastify.js y toastify.css, Toastify 1.12.0 en local)
+    │   ├── styles/style.css    (nuevo: estilos)
+    │   └── scripts/app.js      (nuevo: pestañas, formulario y listado)
     └── specs/06-frontend.md  (nuevo)
 
 No cambian `docker-compose.yml`, el `Dockerfile`, `init.sql` ni `public/api/`. El volumen `./public` ya se ve en `web`, y Apache sirve `index.html` en `http://localhost:8081/`. La web y la API comparten origen, así que no hace falta CORS y las peticiones usan la ruta relativa `/api/consultations.php`.
@@ -80,15 +82,16 @@ El mensaje se muestra en una zona con `aria-live="polite"` para que lo lean los 
 
 ### Pestaña "Listado"
 
-Tabla con estas columnas, en este orden: **Nombre**, **Mensaje**, **Departamento**, **Estado**, **Fecha**.
+Tabla con estas columnas, en este orden: **Nombre**, **Mensaje**, **Departamento**, **Estado**, **Fecha / hora**.
 
 - Orden: el que devuelve la API (la más reciente primero). No se reordena en el navegador.
+- Los mensajes largos se recortan a 3 líneas. Si el texto no cabe, aparece un botón **Mostrar más** que lo expande y pasa a **Mostrar menos** para contraerlo. Si cabe entero, no hay botón. Funciona con textos largos sin espacios.
 - `department` vacío se muestra como `—`.
 - `status` se muestra en español: `pending` → "Pendiente", `classified` → "Clasificada", `error` → "Error".
-- `Fecha` es `created_at` tal cual lo devuelve la API.
+- `Fecha / hora` es `created_at` en formato español `DD/MM/AAAA HH:MM:SS`. Solo se reordena el texto de la API, sin conversión de zona horaria.
 - Estados de la pestaña: "Cargando..." mientras espera, "Todavía no hay consultas." si la lista está vacía, y "No se ha podido cargar el listado." con un botón **Reintentar** si la petición falla.
 - Un botón **Actualizar** vuelve a pedir la lista.
-- En pantallas estrechas la tabla se desplaza en horizontal dentro de su contenedor, sin romper la página.
+- En pantallas estrechas (hasta 640 px) cada consulta se muestra como una tarjeta con sus cinco datos en filas "etiqueta + valor", de modo que se ve todo sin desplazamiento horizontal. En pantallas anchas se mantiene la tabla.
 
 ### Seguridad al mostrar datos
 
@@ -119,10 +122,11 @@ El texto de `client_name` y `message` lo escribe el usuario y la API lo devuelve
 - [ ] Si la API devuelve `422` o `500`, o está caída, se muestra el mensaje correspondiente de la tabla y **se conserva** lo escrito en el formulario.
 - [ ] Un mensaje con `<script>alert(1)</script>` y otro con `<img src=x onerror=alert(1)>` se ven como texto en el listado y no ejecutan nada.
 - [ ] Las tildes y la `ñ` se ven bien en el formulario, en los mensajes y en el listado.
-- [ ] El listado muestra las columnas Nombre, Mensaje, Departamento, Estado y Fecha, con `—` cuando no hay departamento.
+- [ ] El listado muestra las columnas Nombre, Mensaje, Departamento, Estado y Fecha / hora (como `DD/MM/AAAA HH:MM:SS`), con `—` cuando no hay departamento.
 - [ ] Con la lista vacía se muestra "Todavía no hay consultas.". Si la petición falla se muestra "No se ha podido cargar el listado." con un botón **Reintentar** que funciona.
 - [ ] Un mensaje de 2000 caracteres sin espacios no rompe el diseño (ni en el listado ni en móvil).
-- [ ] A 375 px de ancho no hay desplazamiento horizontal de la página; solo la tabla se desplaza dentro de su contenedor.
+- [ ] Un mensaje largo se ve recortado a 3 líneas con **Mostrar más**, que lo expande y pasa a **Mostrar menos**. Un mensaje corto no muestra el botón.
+- [ ] A 375 px de ancho no hay ningún desplazamiento horizontal (ni de la página ni del listado) y se ven todos los datos de cada consulta.
 - [ ] No hay ningún uso de `innerHTML`, `outerHTML` ni `insertAdjacentHTML` con datos de la API (se comprueba con una búsqueda en `app.js`).
 - [ ] No se carga ningún recurso externo (ni librerías, ni fuentes, ni scripts de terceros).
 - [ ] `GET` y `POST` de la API y `health.php` siguen funcionando igual.
@@ -137,7 +141,7 @@ El texto de `client_name` y `message` lo escribe el usuario y la API lo devuelve
 - **Sí:** conservar lo escrito si el envío falla. Perder un mensaje largo por un fallo de red es lo peor que le puede pasar al usuario.
 - **Sí:** tiempo máximo de 20 s en el navegador, mayor que los 15 s de la API, y un mensaje propio que avisa de que la consulta puede haberse guardado.
 - **Sí:** refrescar el listado al abrir su pestaña y con un botón. Es simple y siempre está al día sin consultar la API cada pocos segundos.
-- **Sí:** la fecha se muestra tal cual la devuelve la API (`YYYY-MM-DD HH:MM:SS`). Sin conversiones de zona horaria, igual que en el SPEC 05.
+- **Sí:** la fecha se muestra en formato español (`DD/MM/AAAA HH:MM:SS`) reordenando el texto que devuelve la API (`YYYY-MM-DD HH:MM:SS`). Sin conversiones de zona horaria, igual que en el SPEC 05.
 - **Sí:** validar en el navegador solo por comodidad. La API sigue siendo la fuente de verdad y repite todas las comprobaciones.
 - **No:** mostrar los mensajes de error de la API. Están en inglés y son técnicos; el usuario ve textos propios en español.
 - **No:** fuentes ni librerías externas. La página funciona sin internet y no depende de terceros.
@@ -153,20 +157,20 @@ El texto de `client_name` y `message` lo escribe el usuario y la API lo devuelve
 | El envío tarda hasta 15 s si Gemini falla | Texto "Enviando..." y botón desactivado para que se vea que no se ha colgado. |
 | El navegador da por perdida una petición que la API sí guardó | Mensaje de tiempo agotado que manda mirar el listado antes de reenviar. |
 | La API devuelve algo que no es JSON (por ejemplo una página de error de Apache) | La lectura del JSON va dentro de `try/catch` y se trata como "No se ha podido enviar la consulta". |
-| Una palabra muy larga rompe la tabla | `overflow-wrap: anywhere` y la tabla dentro de un contenedor con desplazamiento horizontal. |
+| Una palabra muy larga rompe la tabla o la tarjeta | `overflow-wrap: anywhere`, tarjetas en móvil y la tabla dentro de un contenedor con desplazamiento horizontal en pantallas intermedias. |
 | El navegador guarda en caché una versión antigua de `app.js` | Recarga forzada (`Ctrl+F5`) durante las pruebas. |
 | `index.html` no se sirve en la raíz | Se comprueba en el Paso 1; el `php:apache` incluye `index.html` como página por defecto. |
 
 ## Progreso de la implementación
 
-Rama: pendiente de crear (`spec-06-frontend`). Última actualización: 2026-11-14.
+Rama: `spec-06-frontend`. Última actualización: 2026-11-15.
 
-- [ ] Paso 1: página base y pestañas.
-- [ ] Paso 2: listado.
-- [ ] Paso 3: formulario y envío.
-- [ ] Paso 4: mensajes de resultado.
-- [ ] Paso 5: caminos de fallo y seguridad.
-- [ ] Paso 6: cierre y push.
+- [x] Paso 1: página base y pestañas.
+- [x] Paso 2: listado.
+- [x] Paso 3: formulario y envío.
+- [x] Paso 4: mensajes de resultado.
+- [x] Paso 5: caminos de fallo y seguridad.
+- [x] Paso 6: cierre y push.
 
 ## Lo que **no** está en este spec
 
