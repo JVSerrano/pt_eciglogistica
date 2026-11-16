@@ -31,7 +31,7 @@ Cada consulta se clasifica en uno de estos departamentos:
 1. Descarga el proyecto y entra en la carpeta:
 
    ```bash
-   git clone <url-del-repositorio>
+   git clone https://github.com/JVSerrano/pt_eciglogistica
    cd PT_Eciglogistica
    ```
 
