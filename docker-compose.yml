@@ -10,8 +10,9 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      # Puerto del PC : puerto dentro del contenedor
-      - "5433:5432"
+      # IP : puerto del PC : puerto dentro del contenedor
+      # 127.0.0.1 hace que solo este PC pueda conectarse (no la red local)
+      - "127.0.0.1:5433:5432"
     volumes:
       # Guarda los datos aunque se borre el contenedor
       - pgdata:/var/lib/postgresql/data
@@ -32,7 +33,8 @@ services:
     # Lee todas las variables del archivo .env
     env_file: .env
     ports:
-      - "8081:80"
+      # Solo accesible desde este PC: http://localhost:8081
+      - "127.0.0.1:8081:80"
     volumes:
       # Los archivos de ./public se ven dentro del contenedor
       - ./public:/var/www/html

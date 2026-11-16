@@ -174,7 +174,7 @@ Debe terminar con `OK`.
 | Problema | Causa y solución |
 |---|---|
 | `Cannot connect to the Docker daemon` o error similar al ejecutar `docker compose` | Docker Desktop no está abierto. Ábrelo, espera a que arranque y repite. |
-| `port is already allocated` o `address already in use` | El puerto 8081 o 5433 está ocupado. Cierra el programa que lo usa, o cambia el número de la izquierda en `docker-compose.yml` (por ejemplo `"8082:80"`) y abre esa dirección. |
+| `port is already allocated` o `address already in use` | El puerto 8081 o 5433 está ocupado. Cierra el programa que lo usa, o cambia el primer número en `docker-compose.yml` (por ejemplo `"127.0.0.1:8082:80"`) y abre esa dirección. |
 | Error por falta del archivo `.env` | No se ha hecho el paso 2. Ejecuta `cp .env.example .env` (o `copy` en `cmd`). |
 | El listado no carga o `health.php` dice `"database": "error"` | La base de datos aún está arrancando. Espera unos segundos y recarga. Si sigue igual, mira `docker compose logs db`. |
 | He cambiado `db/init.sql` y no se nota | Solo se ejecuta con el volumen vacío. Usa `docker compose down -v` y vuelve a arrancar (borra los datos). |
